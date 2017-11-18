@@ -37,11 +37,11 @@ public class Strand {
         #endif
     #endif
 
-    public init(closure: () -> Void) throws {
+    public init(closure: @escaping () -> Void) throws {
         let holder = Unmanaged.passRetained(StrandClosure(closure: closure))
 
         #if swift(>=3.0)
-            let pointer = UnsafeMutablePointer<Void>(holder.toOpaque())
+            let pointer = UnsafeMutableRawPointer(holder.toOpaque())
             #if os(Linux)
                 guard pthread_create(&pthread, nil, runner, pointer) == 0 else {
                     holder.release()
@@ -103,7 +103,7 @@ public class Strand {
         return nil
     }
     #else
-    private func runner(arg: UnsafeMutablePointer<Void>) -> UnsafeMutablePointer<Void>? {
+    private func runner(arg: UnsafeMutableRawPointer) -> UnsafeMutableRawPointer? {
         let unmanaged = Unmanaged<StrandClosure>.fromOpaque(arg)
         unmanaged.takeUnretainedValue().closure()
         unmanaged.release()
@@ -122,7 +122,7 @@ private func runner(arg: UnsafeMutablePointer<Void>) -> UnsafeMutablePointer<Voi
 private class StrandClosure {
     let closure: () -> Void
 
-    init(closure: () -> Void) {
+    init(closure: @escaping () -> Void) {
         self.closure = closure
     }
 }
